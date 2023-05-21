@@ -19,10 +19,13 @@ async def create_file(file: UploadFile) -> schemas.File:
 async def retrieve_file(filename: str) -> Response:
     # TODO: Add headers to ensure the filename is displayed correctly
     #       You should also ensure that enables the judge to download files directly
+    headers = {
+        "Content-Disposition": f"attachment; filename={filename}",
+    }
     return Response(
         await storage.retrieve_file(filename),
         media_type="application/octet-stream",
-        headers={},
+        headers=headers,
     )
 
 

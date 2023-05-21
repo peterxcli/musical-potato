@@ -1,0 +1,41 @@
+# .github/workflows/tests.yml
+
+name: Run Tests
+
+on:
+  push:
+    branches:
+      - main  # Or whatever your primary branch is named
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.8'
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python -
+
+      - name: Install dependencies
+        run: |
+          poetry install
+
+      - name: Run format check
+        run: |
+          poetry run make format
+
+      - name: Run lint
+        run: |
+          poetry run make lint
+
+      # Add here more test steps if needed.
