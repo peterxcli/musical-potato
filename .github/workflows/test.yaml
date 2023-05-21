@@ -30,8 +30,6 @@ jobs:
         run: |
           poetry run make format
 
-      - name: Run lint
+      - name: Run test
         run: |
-          poetry run make lint
-
-      # Add here more test steps if needed.
+          poetry run make test
