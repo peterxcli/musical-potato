@@ -4,11 +4,7 @@ name: Run Tests
 
 on:
   push:
-    branches:
-      - main  # Or whatever your primary branch is named
   pull_request:
-    branches:
-      - main
 
 jobs:
   test:
