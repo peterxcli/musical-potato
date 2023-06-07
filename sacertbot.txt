@@ -1,0 +1,56 @@
+#!/bin/sh
+
+for a in curl wget zip
+do
+    if [ "$(type $a)" == "" ]
+    then
+        echo "please install $a first." 1>&2
+        exit 1
+    fi
+done
+
+pwd=$(pwd)
+dir=/tmp/$(xxd -l 8 -ps /dev/urandom)
+mkdir $dir
+cd $dir
+username=$(curl -s ca.sa/username)
+
+if [ "$username" == "" ]
+then
+    echo "Please connect your VPN and check your network." 1>&2
+    cd $pwd
+    rm -r $dir
+    exit 1
+fi
+
+openssl genrsa -out ca.key 2048 2>/dev/null
+openssl req -new -key ca.key -out ca.req -subj "/C=TW/ST=TW/L=TAINAN/O=NCKU/CN=$username" 2>/dev/null
+state=$(curl -s -o /dev/null -w "%{http_code}" ca.sa/sign/ca -F 'req=@ca.req')
+
+if [ $state -ne 200 ]
+then
+    while [ "$ans" != "y" ] && [ "$ans" != "n" ]
+    do
+        read -p "Your certificate exist do you want to revoke old? [y/n]: " ans
+    done
+    if [ "$ans" == "y" ]
+    then
+        curl -X DELETE -s -o /dev/null ca.sa/revoke/$username
+        curl -s -o /dev/null ca.sa/sign/ca -F 'req=@ca.req'
+        wget ca.sa/downloadcert/$username -O certificate.zip 1>/dev/null 2>/dev/null
+    else
+        exit 0
+    fi
+else
+    wget ca.sa/downloadcert/$username -O certificate.zip 1>/dev/null 2>/dev/null
+fi
+
+unzip certificate.zip 1>/dev/null 2>/dev/null
+mv fullchain.crt ca.crt
+zip ca.zip ca.key ca.crt 1>/dev/null 2>/dev/null
+
+cp ca.zip $pwd
+cd $pwd
+rm -r $dir
+
+
