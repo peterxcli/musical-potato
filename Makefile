@@ -14,6 +14,9 @@ format:
 	poetry run black ${APP}
 	poetry run isort ${APP}
 
+run: 
+	cd api && poetry run uvicorn app:APP --reload --host 0.0.0.0
+
 test:
 	poetry run pytest -vv ${APP}/tests
 
