@@ -15,7 +15,7 @@ import os
 
 class Storage:
     def __init__(self, is_test: bool):
-        logger.warning("NUM_DISKS: ", settings.NUM_DISKS)
+        logger.warning(f"NUM_DISKS: {settings.NUM_DISKS}")
         self.block_path: List[Path] = [
             Path(settings.UPLOAD_PATH) / f"{settings.FOLDER_PREFIX}-{i}"
             if is_test
