@@ -15,7 +15,7 @@ import os
 
 class Storage:
     def __init__(self, is_test: bool):
-        print("NUM_DISKS: ", settings.NUM_DISKS)
+        logger.warning("NUM_DISKS: ", settings.NUM_DISKS)
         self.block_path: List[Path] = [
             Path(settings.UPLOAD_PATH) / f"{settings.FOLDER_PREFIX}-{i}"
             if is_test
@@ -25,6 +25,7 @@ class Storage:
         self.__create_block()
 
     def __create_block(self):
+        logger.warning("NUM_DISKS: ", settings.NUM_DISKS)
         for path in self.block_path:
             logger.warning(f"Creating folder: {path}")
             path.mkdir(parents=True, exist_ok=True)
