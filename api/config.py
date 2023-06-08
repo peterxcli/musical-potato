@@ -2,9 +2,9 @@ from pydantic import BaseSettings
 
 
 class Settings(BaseSettings):
-    class Config:
-        env_file = "../.env"
-        env_file_encoding = "utf-8"
+    # class Config:
+    #     env_file = "../.env"
+    #     env_file_encoding = "utf-8"
 
     """Application configuration"""
     APP_TITLE: str = "RAID 3 Storage System"
@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     APP_PREFIX: str = "/api"
 
     """File storage configuration"""
-    UPLOAD_PATH: str = "/tmp"
+    UPLOAD_PATH: str = "/tmp/raid"
     FOLDER_PREFIX: str = "block"
     NUM_DISKS: int = 5
     MAX_SIZE: int = 1024 * 1024 * 100  # 100MB
