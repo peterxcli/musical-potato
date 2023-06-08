@@ -25,7 +25,6 @@ class Storage:
         self.__create_block()
 
     def __create_block(self):
-        logger.warning("NUM_DISKS: ", settings.NUM_DISKS)
         for path in self.block_path:
             logger.warning(f"Creating folder: {path}")
             path.mkdir(parents=True, exist_ok=True)
