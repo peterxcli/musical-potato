@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     """File storage configuration"""
     UPLOAD_PATH: str = "/tmp/raid"
     FOLDER_PREFIX: str = "block"
-    NUM_DISKS: int = 5
+    NUM_DISKS: int = 4
     MAX_SIZE: int = 1024 * 1024 * 100  # 100MB
 
 
