@@ -49,9 +49,16 @@ class Storage:
     async def check_file(self, filename: str) -> bool:
         for block_path in self.block_path:
             block_file = Path.joinpath(block_path, filename)
-            if block_file.exists():
-                return True
-        return False
+            if not block_file.exists():
+                return False
+        return True
+    
+    async def file_integrity(self, filename: str):
+        blocks = [await self.read_block(block_path / filename) for block_path in self.block_path[:-1]]
+        content = bytearray()
+        for i, block in enumerate(blocks):
+            content += block.strip(b'\x00')
+        return bytes(content)
 
     async def create_file(self, file: UploadFile) -> schemas.File:
         import math
