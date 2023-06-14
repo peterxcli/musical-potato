@@ -122,10 +122,7 @@ class Storage:
             await self.write_block(Path.joinpath(block_path, file.filename), block)
 
         # compute and write the parity block
-        parity = bytearray(blocks[0])
-        for i in range(1, len(blocks)):
-            for j in range(len(parity)):
-                parity[j] ^= blocks[i][j]
+        parity = get_parity(blocks)
 
         await self.write_block(Path.joinpath(self.block_path[-1], file.filename), bytes(parity))
 
@@ -152,10 +149,10 @@ class Storage:
 
     async def _delete_file(self, filename: str) -> None:
         for block_path in self.block_path:
-            try:
+            if (block_path / filename).exists():
                 os.remove(block_path / filename)
-            except FileNotFoundError:
-                pass
+            elif not block_path.exists():
+                (block_path).mkdir(parents=True, exist_ok=True)
 
     async def delete_file(self, filename: str) -> None:
         if not await self.file_integrity(filename):

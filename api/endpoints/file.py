@@ -17,8 +17,6 @@ async def create_file(file: UploadFile) -> schemas.File:
 
 @router.get("/", status_code=status.HTTP_200_OK, name="file:retrieve_file")
 async def retrieve_file(filename: str) -> Response:
-    # TODO: Add headers to ensure the filename is displayed correctly
-    #       You should also ensure that enables the judge to download files directly
     headers = {
         "Content-Disposition": f"attachment; filename={filename}",
     }
