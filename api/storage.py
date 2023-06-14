@@ -63,14 +63,16 @@ class Storage:
                 return False
 
         for i in range(1, len(self.block_path)):
-            if os.path.getsize(self.block_path[i]) != os.path.getsize(self.block_path[i - 1]):
+            prev_block_file = self.read_block(Path.joinpath(self.block_path[i - 1], filename))
+            block_file = self.read_block(Path.joinpath(self.block_path[i], filename))
+            if len(prev_block_file) != len(block_file):
                 logger.error(f"Block size not equal: {self.block_path[i]} {self.block_path[i - 1]}")
                 await self._delete_file(filename)
                 return False
 
         blocks = []
         for i in range(settings.NUM_DISKS - 1):
-            blocks.append(self.read_block(block_file))
+            blocks.append(self.read_block(self.block_path[i] / filename))
 
         _parity = get_parity(blocks)
         parity = self.read_block(Path.joinpath(self.block_path[-1], filename))
