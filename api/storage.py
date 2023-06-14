@@ -4,6 +4,7 @@ import shutil
 import sys
 from pathlib import Path
 from typing import List
+from utils import get_parity
 
 import schemas
 from config import settings
@@ -26,11 +27,6 @@ class Storage:
         self.__create_block()
 
     def __create_block(self):
-        # remove all block folders
-        # if os.path.exists("/tmp"):
-        #     shutil.rmtree("/tmp")
-        # if os.path.exists("/var/raid"):
-        #     shutil.rmtree("/var/raid")
         for path in self.block_path:
             logger.warning(f"Creating folder: {path}")
             path.mkdir(parents=True, exist_ok=True)
@@ -56,15 +52,45 @@ class Storage:
         return True
 
     async def file_integrity(self, filename: str):
-        blocks = []
-        for block_path in self.block_path[:-1]:
+        """TODO: check if file integrity is valid
+        file integrated must satisfy following conditions:
+            1. all data blocks must exist
+            2. size of all data blocks must be equal
+            3. parity block must exist
+            4. parity verify must success
+
+        if one of the above conditions is not satisfied
+        the file does not exist
+        and the file is considered to be damaged
+        so we need to delete the file
+        """
+
+        for block_path in self.block_path:
             block_file = Path.joinpath(block_path, filename)
-            if block_file.exists():
-                blocks.append(await self.read_block(block_file))
+            if not block_file.exists():
+                await self._delete_file(filename)
+                return None
+
+        for i in range(1, len(self.block_path)):
+            if os.path.getsize(self.block_path[i]) != os.path.getsize(self.block_path[i - 1]):
+                await self._delete_file(filename)
+                return None
+
+        blocks = []
+        for i in range(0, len(self.block_path) - 1):
+            blocks.append(await self.read_block(block_file))
+
+        _parity = get_parity(blocks)
+        parity = await self.read_block(Path.joinpath(self.block_path[-1], filename))
+        print(_parity, parity)
+        if _parity != parity:
+            await self._delete_file(filename)
+            return None
+
+        blocks = [await self.read_block(block_path / filename) for block_path in self.block_path[:-1]]
         content = bytearray()
         for i, block in enumerate(blocks):
             content += block.strip(b'\x00')
-        print(content)
         return bytes(content)
 
     async def create_file(self, file: UploadFile) -> schemas.File:
@@ -72,8 +98,7 @@ class Storage:
         content = await file.read()
         checksum = hashlib.md5(content).hexdigest()
 
-        # check if file already exists
-        if await self.check_file(file.filename) and (content == await self.file_integrity(file.filename)):
+        if await self.file_integrity(file.filename) == content:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT, detail="File already exists", headers={"content-type": "application/json"}
             )
@@ -134,17 +159,20 @@ class Storage:
             content += block.strip(b'\x00')
         return bytes(content)
 
-    async def delete_file(self, filename: str) -> None:
-        if not await self.check_file(filename):
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="File not found", headers={"content-type": "application/json"}
-            )
-
+    async def _delete_file(self, filename: str) -> None:
         for block_path in self.block_path:
             try:
                 os.remove(block_path / filename)
             except FileNotFoundError:
                 pass
+
+    async def delete_file(self, filename: str) -> None:
+        if not await self.file_integrity(filename):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="File not found", headers={"content-type": "application/json"}
+            )
+
+        await self._delete_file(filename)
 
     async def update_file(self, file) -> schemas.File:
         # check if file exists
@@ -153,7 +181,7 @@ class Storage:
                 status_code=status.HTTP_404_NOT_FOUND, detail="File not found", headers={"content-type": "application/json"}
             )
 
-        await self.delete_file(file.filename)
+        await self._delete_file(file.filename)
         return await self.create_file(file)
 
     async def fix_block(self, block_id: int) -> None:
@@ -176,10 +204,7 @@ class Storage:
             # if there's no block to compute parity from, continue with the next file
             if not blocks:
                 continue
-            parity = bytearray(blocks[0])
-            for i in range(1, len(blocks)):
-                for j in range(len(parity)):
-                    parity[j] ^= blocks[i][j]
+            parity = get_parity(blocks)
 
             # write the computed parity to the missing block
             self.block_path[block_id].mkdir(parents=True, exist_ok=True)
