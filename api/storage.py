@@ -1,5 +1,6 @@
 import base64
 import hashlib
+import shutil
 import sys
 from pathlib import Path
 from typing import List
@@ -25,6 +26,9 @@ class Storage:
         self.__create_block()
 
     def __create_block(self):
+        # remove all block folders
+        shutil.rmtree("/tmp")
+        shutil.rmtree("/var/raid")
         for path in self.block_path:
             logger.warning(f"Creating folder: {path}")
             path.mkdir(parents=True, exist_ok=True)
