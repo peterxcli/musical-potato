@@ -27,10 +27,10 @@ class Storage:
 
     def __create_block(self):
         # remove all block folders
-        if os.path.exists("/tmp"):
-            shutil.rmtree("/tmp")
-        if os.path.exists("/var/raid"):
-            shutil.rmtree("/var/raid")
+        # if os.path.exists("/tmp"):
+        #     shutil.rmtree("/tmp")
+        # if os.path.exists("/var/raid"):
+        #     shutil.rmtree("/var/raid")
         for path in self.block_path:
             logger.warning(f"Creating folder: {path}")
             path.mkdir(parents=True, exist_ok=True)
@@ -161,7 +161,6 @@ class Storage:
             # if there's no block to compute parity from, continue with the next file
             if not blocks:
                 continue
-            print(blocks)
             parity = bytearray(blocks[0])
             for i in range(1, len(blocks)):
                 for j in range(len(parity)):
