@@ -44,6 +44,7 @@ class Storage:
     async def write_block(self, block_file, content):
         async with aiofiles.open(block_file, 'wb') as f:
             await f.write(content)
+            f.close()
 
     async def check_file(self, filename: str) -> bool:
         for block_path in self.block_path:
@@ -60,14 +61,14 @@ class Storage:
         # check if file already exists
         if await self.check_file(file.filename):
             raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT, detail="File already exists"
+                status_code=status.HTTP_409_CONFLICT, detail="File already exists", headers={"content-type": "application/json"}
             )
 
         # calculate block size
         L = len(content)
         if L > settings.MAX_SIZE:
             raise HTTPException(
-                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="File too large"
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="File too large", headers={"content-type": "application/json"}
             )
         N = settings.NUM_DISKS - 1
         block_size = math.floor(L / N)
@@ -110,7 +111,7 @@ class Storage:
         # check if file exists
         if not await self.check_file(filename):
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="File not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="File not found", headers={"content-type": "application/json"}
             )
 
         blocks = [await self.read_block(block_path / filename) for block_path in self.block_path[:-1]]
@@ -122,7 +123,7 @@ class Storage:
     async def delete_file(self, filename: str) -> None:
         if not await self.check_file(filename):
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="File not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="File not found", headers={"content-type": "application/json"}
             )
 
         for block_path in self.block_path:
@@ -135,7 +136,7 @@ class Storage:
         # check if file exists
         if not await self.check_file(file.filename):
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="File not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="File not found", headers={"content-type": "application/json"}
             )
 
         await self.delete_file(file.filename)
