@@ -23,6 +23,9 @@ dev:
 test:
 	poetry run pytest -vv ${APP}/tests
 
+test_short:
+	poetry run pytest -vv --tb=no ${APP}/tests
+
 clean:
 	find . -type f -name '*.py[co]' -delete
 	find . -type d -name '__pycache__' -delete
