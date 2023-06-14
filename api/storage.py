@@ -27,8 +27,10 @@ class Storage:
 
     def __create_block(self):
         # remove all block folders
-        shutil.rmtree("/tmp")
-        shutil.rmtree("/var/raid")
+        if os.path.exists("/tmp"):
+            shutil.rmtree("/tmp")
+        if os.path.exists("/var/raid"):
+            shutil.rmtree("/var/raid")
         for path in self.block_path:
             logger.warning(f"Creating folder: {path}")
             path.mkdir(parents=True, exist_ok=True)
