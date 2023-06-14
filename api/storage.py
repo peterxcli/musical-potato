@@ -42,7 +42,7 @@ class Storage:
             await f.write(content)
             f.close()
 
-    async def file_integrity(self, filename: str):
+    async def file_integrity(self, filename: str) -> bool:
         """TODO: check if file integrity is valid
         file integrated must satisfy following conditions:
             1. all data blocks must exist
@@ -60,12 +60,12 @@ class Storage:
             block_file = Path.joinpath(block_path, filename)
             if not block_file.exists():
                 await self._delete_file(filename)
-                return None
+                return False
 
         for i in range(1, len(self.block_path)):
             if os.path.getsize(self.block_path[i]) != os.path.getsize(self.block_path[i - 1]):
                 await self._delete_file(filename)
-                return None
+                return False
 
         blocks = []
         for i in range(0, len(self.block_path) - 1):
@@ -76,22 +76,18 @@ class Storage:
         print(_parity, parity)
         if _parity != parity:
             await self._delete_file(filename)
-            return None
+            return False
 
-        blocks = [await self.read_block(block_path / filename) for block_path in self.block_path[:-1]]
-        content = bytearray()
-        for i, block in enumerate(blocks):
-            content += block.strip(b'\x00')
-        return bytes(content)
+        return True
 
     async def create_file(self, file: UploadFile) -> schemas.File:
         import math
         content = await file.read()
         checksum = hashlib.md5(content).hexdigest()
 
-        if await self.file_integrity(file.filename) == content:
+        if await self.file_integrity(file.filename):
             raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT, detail="File already exists", headers={"content-type": "application/json"}
+                status_code=status.HTTP_409_CONFLICT, detail="File already exists", headers={'content-type': 'application/json'}
             )
 
         # calculate block size
