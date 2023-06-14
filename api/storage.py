@@ -58,11 +58,13 @@ class Storage:
         for block_path in self.block_path:
             block_file = Path.joinpath(block_path, filename)
             if not block_file.exists():
+                logger.error(f"Block file not exist: {block_file}")
                 await self._delete_file(filename)
                 return False
 
         for i in range(1, len(self.block_path)):
             if os.path.getsize(self.block_path[i]) != os.path.getsize(self.block_path[i - 1]):
+                logger.error(f"Block size not equal: {self.block_path[i]} {self.block_path[i - 1]}")
                 await self._delete_file(filename)
                 return False
 
@@ -74,6 +76,7 @@ class Storage:
         parity = self.read_block(Path.joinpath(self.block_path[-1], filename))
         print(_parity, parity)
         if _parity != parity:
+            logger.error(f"Parity verify failed: {_parity} {parity}")
             await self._delete_file(filename)
             return False
 
