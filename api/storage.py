@@ -68,7 +68,7 @@ class Storage:
                 return False
 
         blocks = []
-        for i in range(0, len(self.block_path) - 1):
+        for i in range(settings.NUM_DISKS - 1):
             blocks.append(await self.read_block(block_file))
 
         _parity = get_parity(blocks)
