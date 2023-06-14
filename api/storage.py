@@ -31,16 +31,15 @@ class Storage:
             logger.warning(f"Creating folder: {path}")
             path.mkdir(parents=True, exist_ok=True)
 
-    async def read_block(self, block_file):
-        async with aiofiles.open(block_file, 'rb') as f:
-            return await f.read()
+    def read_block(self, block_file):
+        with open(block_file, 'rb') as f:
+            return f.read()
 
-    async def write_block(self, block_file, content):
+    def write_block(self, block_file, content):
         if not block_file.parent.exists():
             block_file.parent.mkdir(parents=True, exist_ok=True)
-        async with aiofiles.open(block_file, 'wb') as f:
-            await f.write(content)
-            f.close()
+        with open(block_file, 'wb') as f:
+            f.write(content)
 
     async def file_integrity(self, filename: str) -> bool:
         """TODO: check if file integrity is valid
@@ -69,10 +68,10 @@ class Storage:
 
         blocks = []
         for i in range(settings.NUM_DISKS - 1):
-            blocks.append(await self.read_block(block_file))
+            blocks.append(self.read_block(block_file))
 
         _parity = get_parity(blocks)
-        parity = await self.read_block(Path.joinpath(self.block_path[-1], filename))
+        parity = self.read_block(Path.joinpath(self.block_path[-1], filename))
         print(_parity, parity)
         if _parity != parity:
             await self._delete_file(filename)
@@ -115,12 +114,12 @@ class Storage:
 
         # write to each storage device
         for block, block_path in zip(blocks, self.block_path):
-            await self.write_block(Path.joinpath(block_path, file.filename), block)
+            self.write_block(Path.joinpath(block_path, file.filename), block)
 
         # compute and write the parity block
         parity = get_parity(blocks)
 
-        await self.write_block(Path.joinpath(self.block_path[-1], file.filename), bytes(parity))
+        self.write_block(Path.joinpath(self.block_path[-1], file.filename), bytes(parity))
 
         return schemas.File(
             name=file.filename,
@@ -137,7 +136,7 @@ class Storage:
                 status_code=status.HTTP_404_NOT_FOUND, detail="File not found", headers={"content-type": "application/json"}
             )
 
-        blocks = [await self.read_block(block_path / filename) for block_path in self.block_path[:-1]]
+        blocks = [self.read_block(block_path / filename) for block_path in self.block_path[:-1]]
         content = bytearray()
         for i, block in enumerate(blocks):
             content += block.strip(b'\x00')
@@ -182,7 +181,7 @@ class Storage:
 
         for filename in filenames:
             # read all other blocks and compute the XOR parity
-            blocks = [await self.read_block(block_path / filename)
+            blocks = [self.read_block(block_path / filename)
                       for i, block_path in enumerate(self.block_path) if i != block_id and (block_path / filename).exists()]
 
             # if there's no block to compute parity from, continue with the next file
@@ -192,7 +191,7 @@ class Storage:
 
             # write the computed parity to the missing block
             self.block_path[block_id].mkdir(parents=True, exist_ok=True)
-            await self.write_block(self.block_path[block_id] / filename, bytes(parity))
+            self.write_block(self.block_path[block_id] / filename, bytes(parity))
 
 
 storage: Storage = Storage(is_test="pytest" in sys.modules)
