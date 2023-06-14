@@ -97,9 +97,11 @@ class Storage:
         # calculate block size
         L = len(content)
         if L > settings.MAX_SIZE:
+            logger.error(f"File too large: {file.filename}, size: {L}")
             raise HTTPException(
                 status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="File too large", headers={"content-type": "application/json"}
             )
+        logger.info("creating file: {file.filename} with size: {L}")
         N = settings.NUM_DISKS - 1
         block_size = math.floor(L / N)
         blocks = []
