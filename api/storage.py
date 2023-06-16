@@ -17,6 +17,7 @@ import os
 
 class Storage:
     def __init__(self, is_test: bool):
+        logger.warning(f"MAX_SIZE: {settings.MAX_SIZE}")
         logger.warning(f"NUM_DISKS: {settings.NUM_DISKS}")
         self.block_path: List[Path] = [
             Path("/tmp") / f"{settings.FOLDER_PREFIX}-{i}-test"
