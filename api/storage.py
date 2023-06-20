@@ -151,6 +151,7 @@ class Storage:
         return bytes(content)
 
     async def _delete_file(self, filename: str) -> None:
+        logger.info(f"deleting file: {filename}")
         for block_path in self.block_path:
             if (block_path / filename).exists():
                 os.remove(block_path / filename)
